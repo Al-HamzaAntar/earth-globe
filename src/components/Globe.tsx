@@ -11,6 +11,19 @@ type CountryFeature = GeoFeature<
 
 const WORLD_TOPO_URL =
   "https://unpkg.com/world-atlas@2/countries-110m.json";
+const COUNTRY_NAMES_TSV_URL =
+  "https://unpkg.com/world-atlas@2/country-names.tsv";
+
+type RestCountry = {
+  ccn3?: string;
+  name: { common: string; official?: string };
+  capital?: string[];
+  region?: string;
+  subregion?: string;
+  population?: number;
+  flag?: string;
+  flags?: { svg?: string; png?: string };
+};
 
 const Globe: React.FC = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -20,6 +33,7 @@ const Globe: React.FC = () => {
   const rotationRef = useRef({ lambda: 0, phi: -15 });
   const speedRef = useRef(0.015); // deg per ms
   const featuresRef = useRef<CountryFeature[]>([]);
+  const countryInfoRef = useRef<Map<string, RestCountry>>(new Map());
   const projectionRef = useRef<d3.GeoProjection | null>(null);
   const pathRef = useRef<d3.GeoPath<any, d3.GeoPermissibleObjects> | null>(
     null
@@ -122,13 +136,41 @@ const Globe: React.FC = () => {
         "px-2 py-1 rounded-md bg-popover text-popover-foreground border border-border shadow-sm text-sm opacity-0 transition-opacity duration-150"
       );
 
-    // Fetch world data
+    // Fetch world + names + country info
     (async () => {
       try {
-        const world = (await d3.json(WORLD_TOPO_URL)) as any;
-        const countries = topojsonFeature(world, world.objects.countries)
-          .features as CountryFeature[];
+        const [world, namesTSV, restCountries] = await Promise.all([
+          d3.json(WORLD_TOPO_URL) as Promise<any>,
+          d3.tsv(COUNTRY_NAMES_TSV_URL) as Promise<Array<{ id: string; name: string }>>,
+          fetch(
+            "https://restcountries.com/v3.1/all?fields=ccn3,name,capital,region,subregion,population,flag,flags"
+          ).then((r) => r.json()) as Promise<RestCountry[]>,
+        ]);
+
+        const byIdName = new Map(
+          (namesTSV as Array<{ id: string; name: string }>).map((d) => [
+            Number(d.id),
+            d.name,
+          ])
+        );
+
+        const countries = (topojsonFeature(world, world.objects.countries)
+          .features as CountryFeature[]).map((f) => ({
+          ...f,
+          properties: {
+            ...(f.properties || {}),
+            name: byIdName.get(Number(f.id)) || f.properties?.name,
+          },
+        })) as CountryFeature[];
+
         featuresRef.current = countries;
+
+        const infoMap = new Map<string, RestCountry>();
+        (restCountries as RestCountry[]).forEach((rc) => {
+          if (rc.ccn3) infoMap.set(String(Number(rc.ccn3)), rc);
+        });
+        countryInfoRef.current = infoMap;
+
         setLoading(false);
         draw();
       } catch (e) {
@@ -181,11 +223,21 @@ const Globe: React.FC = () => {
 
       if (hovered) {
         const name = hovered.properties?.name || "";
-        if (name) {
-          tooltip.style("opacity", "1");
-          tooltip.style("transform", `translate(${x + 12}px, ${y + 12}px)`);
-          tooltip.text(name);
-        }
+        const info = countryInfoRef.current.get(String(Number(hovered.id)));
+        const capital = info?.capital?.[0] ?? "—";
+        const region = info?.region ?? "—";
+        const population = info?.population ? d3.format(",")(info.population) : "—";
+        const flag = info?.flag ?? "";
+        tooltip.style("opacity", "1");
+        tooltip.style("transform", `translate(${x + 12}px, ${y + 12}px)`);
+        tooltip.html(
+          `<div class="space-y-0.5">
+            <div class="font-medium text-foreground">${flag ? `${flag} ` : ""}${name ?? ""}</div>
+            <div class="text-muted-foreground">Capital: ${capital}</div>
+            <div class="text-muted-foreground">Region: ${region}</div>
+            <div class="text-muted-foreground">Population: ${population}</div>
+          </div>`
+        );
       } else {
         tooltip.style("opacity", "0");
       }
@@ -248,7 +300,7 @@ const Globe: React.FC = () => {
     oceans
       .join("path")
       .attr("d", path as any)
-      .attr("class", "fill-accent/20");
+      .attr("class", "fill-current text-accent/20");
 
     // Graticule
     const graticule = d3.geoGraticule10();
@@ -260,7 +312,7 @@ const Globe: React.FC = () => {
       .attr("class", "fill-none stroke-ring stroke-opacity-20 stroke-[0.5px]");
 
     // Countries
-    const baseClasses = "stroke-border stroke-[0.5px]";
+    const baseClasses = "stroke-border stroke-[0.5px] fill-current";
     const countries = svg
       .select('[data-layer="countries"]')
       .selectAll<SVGPathElement, CountryFeature>("path")
@@ -275,16 +327,16 @@ const Globe: React.FC = () => {
           .attr("class", (d) => {
             const highlighted = hoveredIdRef.current === (d.id ?? null);
             return highlighted
-              ? `${baseClasses} fill-primary fill-opacity-60`
-              : `${baseClasses} fill-secondary`;
+              ? `${baseClasses} text-primary fill-opacity-60`
+              : `${baseClasses} text-secondary`;
           })
       )
       .attr("d", path as any)
       .attr("class", (d) => {
         const highlighted = hoveredIdRef.current === (d.id ?? null);
         return highlighted
-          ? `${baseClasses} fill-primary fill-opacity-60`
-          : `${baseClasses} fill-secondary`;
+          ? `${baseClasses} text-primary fill-opacity-60`
+          : `${baseClasses} text-secondary`;
       });
   };
 
@@ -295,7 +347,7 @@ const Globe: React.FC = () => {
           World Countries Globe
         </h2>
         <p className="text-sm text-muted-foreground">
-          Drag to rotate. Hover a country to reveal its name.
+          Drag to rotate. Hover a country to see details.
         </p>
       </header>
       <div
