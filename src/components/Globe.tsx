@@ -216,10 +216,14 @@ const Globe: React.FC = () => {
         
         const capital = countryInfo.capital || "Unknown";
         
+        // Get container bounds for proper positioning
+        const containerRect = containerRef.current!.getBoundingClientRect();
+        const mouseX = event.clientX - containerRect.left;
+        const mouseY = event.clientY - containerRect.top;
+        
         tooltip.style("opacity", "1");
-        // Position tooltip to follow mouse cursor
-        tooltip.style("left", `${event.clientX + 12}px`);
-        tooltip.style("top", `${event.clientY - 8}px`);
+        tooltip.style("left", `${mouseX + 12}px`);
+        tooltip.style("top", `${mouseY - 8}px`);
         tooltip.html(`
           <div class="space-y-1">
             <div class="font-medium text-foreground">${name}</div>

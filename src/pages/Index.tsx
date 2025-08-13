@@ -57,7 +57,7 @@ const Index = () => {
           A responsive, accessible globe with all world countries.
         </p>
       </header>
-      <section className="container mx-auto pb-12">
+      <section className="container mx-auto">
         <Globe />
       </section>
     </main>
