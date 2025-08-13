@@ -217,7 +217,9 @@ const Globe: React.FC = () => {
         const capital = countryInfo.capital || "Unknown";
         
         tooltip.style("opacity", "1");
-        tooltip.style("transform", `translate(${x + 12}px, ${y + 12}px)`);
+        // Position tooltip to follow mouse cursor
+        tooltip.style("left", `${event.clientX + 12}px`);
+        tooltip.style("top", `${event.clientY - 8}px`);
         tooltip.html(`
           <div class="space-y-1">
             <div class="font-medium text-foreground">${name}</div>
