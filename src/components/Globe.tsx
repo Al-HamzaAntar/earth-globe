@@ -25,9 +25,11 @@ const Globe: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const animationRef = useRef<number | null>(null);
   const rotationRef = useRef({ lambda: 0, phi: -15 });
-  const speedRef = useRef(0.015); // deg per ms
+  const speedRef = useRef(0); // Disabled rotation
   const featuresRef = useRef<CountryFeature[]>([]);
   const countryInfoRef = useRef<Map<string, CountryInfo>>(new Map());
+  const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  const currentZoomRef = useRef(1);
   const projectionRef = useRef<d3.GeoProjection | null>(null);
   const pathRef = useRef<d3.GeoPath<any, d3.GeoPermissibleObjects> | null>(
     null
@@ -47,7 +49,7 @@ const Globe: React.FC = () => {
       svgRef.current.setAttribute("width", String(width));
       svgRef.current.setAttribute("height", String(height));
 
-      const radius = Math.min(width, height) / 2 - 8;
+      const radius = (Math.min(width, height) / 2 - 8) * currentZoomRef.current;
       const projection = d3
         .geoOrthographic()
         .precision(0.5)
@@ -92,7 +94,7 @@ const Globe: React.FC = () => {
         .attr("width", width)
         .attr("height", height);
 
-      const radius = Math.min(width, height) / 2 - 8;
+      const radius = (Math.min(width, height) / 2 - 8) * currentZoomRef.current;
       const projection = d3
         .geoOrthographic()
         .precision(0.5)
@@ -145,17 +147,151 @@ const Globe: React.FC = () => {
 
         featuresRef.current = countries;
 
-        // Create country info map
+        // Create country info map with fallback capitals
         const countryInfoMap = new Map<string, CountryInfo>();
+        
+        // Add fallback capitals for common countries
+        const fallbackCapitals: { [key: string]: string } = {
+          "United States of America": "Washington, D.C.",
+          "United Kingdom": "London",
+          "Russia": "Moscow",
+          "China": "Beijing",
+          "India": "New Delhi",
+          "Japan": "Tokyo",
+          "Germany": "Berlin",
+          "France": "Paris",
+          "Italy": "Rome",
+          "Spain": "Madrid",
+          "Brazil": "Brasília",
+          "Canada": "Ottawa",
+          "Australia": "Canberra",
+          "Mexico": "Mexico City",
+          "South Africa": "Cape Town",
+          "Egypt": "Cairo",
+          "Nigeria": "Abuja",
+          "Kenya": "Nairobi",
+          "Argentina": "Buenos Aires",
+          "Chile": "Santiago",
+          "Colombia": "Bogotá",
+          "Peru": "Lima",
+          "Venezuela": "Caracas",
+          "Ecuador": "Quito",
+          "Bolivia": "Sucre",
+          "Uruguay": "Montevideo",
+          "Paraguay": "Asunción",
+          "Guyana": "Georgetown",
+          "Suriname": "Paramaribo",
+          "Turkey": "Ankara",
+          "Iran": "Tehran",
+          "Iraq": "Baghdad",
+          "Saudi Arabia": "Riyadh",
+          "Israel": "Jerusalem",
+          "Jordan": "Amman",
+          "Lebanon": "Beirut",
+          "Syria": "Damascus",
+          "Afghanistan": "Kabul",
+          "Pakistan": "Islamabad",
+          "Bangladesh": "Dhaka",
+          "Myanmar": "Naypyidaw",
+          "Thailand": "Bangkok",
+          "Vietnam": "Hanoi",
+          "Cambodia": "Phnom Penh",
+          "Laos": "Vientiane",
+          "Malaysia": "Kuala Lumpur",
+          "Singapore": "Singapore",
+          "Indonesia": "Jakarta",
+          "Philippines": "Manila",
+          "South Korea": "Seoul",
+          "North Korea": "Pyongyang",
+          "Mongolia": "Ulaanbaatar",
+          "Kazakhstan": "Nur-Sultan",
+          "Uzbekistan": "Tashkent",
+          "Ukraine": "Kyiv",
+          "Poland": "Warsaw",
+          "Czech Republic": "Prague",
+          "Slovakia": "Bratislava",
+          "Hungary": "Budapest",
+          "Romania": "Bucharest",
+          "Bulgaria": "Sofia",
+          "Greece": "Athens",
+          "Albania": "Tirana",
+          "Serbia": "Belgrade",
+          "Croatia": "Zagreb",
+          "Slovenia": "Ljubljana",
+          "Austria": "Vienna",
+          "Switzerland": "Bern",
+          "Netherlands": "Amsterdam",
+          "Belgium": "Brussels",
+          "Denmark": "Copenhagen",
+          "Sweden": "Stockholm",
+          "Norway": "Oslo",
+          "Finland": "Helsinki",
+          "Estonia": "Tallinn",
+          "Latvia": "Riga",
+          "Lithuania": "Vilnius",
+          "Ireland": "Dublin",
+          "Portugal": "Lisbon",
+          "Morocco": "Rabat",
+          "Algeria": "Algiers",
+          "Tunisia": "Tunis",
+          "Libya": "Tripoli",
+          "Sudan": "Khartoum",
+          "Ethiopia": "Addis Ababa",
+          "Somalia": "Mogadishu",
+          "Tanzania": "Dodoma",
+          "Uganda": "Kampala",
+          "Rwanda": "Kigali",
+          "Burundi": "Gitega",
+          "Dem. Rep. Congo": "Kinshasa",
+          "Congo": "Brazzaville",
+          "Central African Rep.": "Bangui",
+          "Chad": "N'Djamena",
+          "Niger": "Niamey",
+          "Mali": "Bamako",
+          "Burkina Faso": "Ouagadougou",
+          "Senegal": "Dakar",
+          "Mauritania": "Nouakchott",
+          "Ghana": "Accra",
+          "Côte d'Ivoire": "Yamoussoukro",
+          "Liberia": "Monrovia",
+          "Sierra Leone": "Freetown",
+          "Guinea": "Conakry",
+          "Guinea-Bissau": "Bissau",
+          "Gambia": "Banjul",
+          "Cameroon": "Yaoundé",
+          "Gabon": "Libreville",
+          "Eq. Guinea": "Malabo",
+          "São Tomé and Príncipe": "São Tomé",
+          "Angola": "Luanda",
+          "Zambia": "Lusaka",
+          "Zimbabwe": "Harare",
+          "Botswana": "Gaborone",
+          "Namibia": "Windhoek",
+          "eSwatini": "Mbabane",
+          "Lesotho": "Maseru",
+          "Malawi": "Lilongwe",
+          "Mozambique": "Maputo",
+          "Madagascar": "Antananarivo"
+        };
+        
+        // First add REST Countries data
         restCountries.forEach((country) => {
           const name = country.name?.common;
           const capital = country.capital?.[0];
           if (name) {
             countryInfoMap.set(name, { name, capital });
-            // Also add common variations and shortened names
             countryInfoMap.set(name.toLowerCase(), { name, capital });
           }
         });
+        
+        // Then add fallback capitals
+        Object.entries(fallbackCapitals).forEach(([name, capital]) => {
+          if (!countryInfoMap.has(name)) {
+            countryInfoMap.set(name, { name, capital });
+            countryInfoMap.set(name.toLowerCase(), { name, capital });
+          }
+        });
+        
         countryInfoRef.current = countryInfoMap;
 
         setLoading(false);
@@ -185,11 +321,20 @@ const Globe: React.FC = () => {
         draw();
       })
       .on("end", () => {
-        // Resume slow spin
-        if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          speedRef.current = 0.015;
-        }
+        // Keep rotation stopped
+        speedRef.current = 0;
       });
+
+    // Add zoom functionality
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.5, 3])
+      .on("zoom", (event) => {
+        currentZoomRef.current = event.transform.k;
+        draw();
+      });
+
+    zoomRef.current = zoom;
+    svg.call(zoom);
 
     svg.call(drag as any);
 
@@ -339,7 +484,7 @@ const Globe: React.FC = () => {
           World Countries Globe
         </h2>
         <p className="text-sm text-muted-foreground">
-          Drag to rotate. Hover a country to see its name and capital.
+          Drag to rotate. Scroll to zoom. Hover a country to see its name and capital.
         </p>
       </header>
       <div
