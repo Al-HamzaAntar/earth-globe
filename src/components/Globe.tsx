@@ -9,10 +9,9 @@ type CountryFeature = GeoFeature<
   { name?: string; [key: string]: any }
 > & { id?: number | string };
 
+// Using a reliable source for world topology data
 const WORLD_TOPO_URL =
-  "https://unpkg.com/world-atlas@2/countries-110m.json";
-const COUNTRY_NAMES_TSV_URL =
-  "https://unpkg.com/world-atlas@2/country-names.tsv";
+  "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 
 const Globe: React.FC = () => {
@@ -125,29 +124,13 @@ const Globe: React.FC = () => {
         "px-2 py-1 rounded-md bg-popover text-popover-foreground border border-border shadow-sm text-sm opacity-0 transition-opacity duration-150"
       );
 
-    // Fetch world + names
+    // Fetch world topology data
     (async () => {
       try {
-        const [world, namesTSV] = await Promise.all([
-          d3.json(WORLD_TOPO_URL) as Promise<any>,
-          d3.tsv(COUNTRY_NAMES_TSV_URL) as Promise<Array<{ id: string; name: string }>>,
-        ]);
+        const world = await d3.json(WORLD_TOPO_URL) as any;
 
-        const byIdName = new Map(
-          (namesTSV as Array<{ id: string; name: string }>).map((d) => [
-            Number(d.id),
-            d.name,
-          ])
-        );
-
-        const countries = (topojsonFeature(world, world.objects.countries)
-          .features as CountryFeature[]).map((f) => ({
-          ...f,
-          properties: {
-            ...(f.properties || {}),
-            name: byIdName.get(Number(f.id)) || f.properties?.name,
-          },
-        })) as CountryFeature[];
+        const countries = topojsonFeature(world, world.objects.countries)
+          .features as CountryFeature[];
 
         featuresRef.current = countries;
 
