@@ -9,6 +9,11 @@ type CountryFeature = GeoFeature<
   { name?: string; [key: string]: any }
 > & { id?: number | string };
 
+type CountryInfo = {
+  name: string;
+  capital?: string;
+};
+
 // Using a reliable source for world topology data
 const WORLD_TOPO_URL =
   "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
@@ -22,6 +27,7 @@ const Globe: React.FC = () => {
   const rotationRef = useRef({ lambda: 0, phi: -15 });
   const speedRef = useRef(0.015); // deg per ms
   const featuresRef = useRef<CountryFeature[]>([]);
+  const countryInfoRef = useRef<Map<string, CountryInfo>>(new Map());
   const projectionRef = useRef<d3.GeoProjection | null>(null);
   const pathRef = useRef<d3.GeoPath<any, d3.GeoPermissibleObjects> | null>(
     null
@@ -124,16 +130,33 @@ const Globe: React.FC = () => {
         "px-2 py-1 rounded-md bg-popover text-popover-foreground border border-border shadow-sm text-sm opacity-0 transition-opacity duration-150"
       );
 
-    // Fetch world topology data
+    // Fetch world topology data and country info
     (async () => {
       try {
-        const world = await d3.json(WORLD_TOPO_URL) as any;
+        const [world, restCountries] = await Promise.all([
+          d3.json(WORLD_TOPO_URL) as Promise<any>,
+          fetch("https://restcountries.com/v3.1/all?fields=name,capital")
+            .then((r) => r.json())
+            .catch(() => []) as Promise<Array<{ name: { common: string }; capital?: string[] }>>
+        ]);
 
         const countries = topojsonFeature(world, world.objects.countries)
           .features as CountryFeature[];
 
         featuresRef.current = countries;
 
+        // Create country info map
+        const countryInfoMap = new Map<string, CountryInfo>();
+        restCountries.forEach((country) => {
+          const name = country.name?.common;
+          const capital = country.capital?.[0];
+          if (name) {
+            countryInfoMap.set(name, { name, capital });
+            // Also add common variations and shortened names
+            countryInfoMap.set(name.toLowerCase(), { name, capital });
+          }
+        });
+        countryInfoRef.current = countryInfoMap;
 
         setLoading(false);
         draw();
@@ -187,9 +210,20 @@ const Globe: React.FC = () => {
 
       if (hovered) {
         const name = hovered.properties?.name || "";
+        const countryInfo = countryInfoRef.current.get(name) || 
+                           countryInfoRef.current.get(name.toLowerCase()) || 
+                           { name, capital: undefined };
+        
+        const capital = countryInfo.capital || "Unknown";
+        
         tooltip.style("opacity", "1");
         tooltip.style("transform", `translate(${x + 12}px, ${y + 12}px)`);
-        tooltip.text(name);
+        tooltip.html(`
+          <div class="space-y-1">
+            <div class="font-medium text-foreground">${name}</div>
+            <div class="text-sm text-muted-foreground">Capital: ${capital}</div>
+          </div>
+        `);
       } else {
         tooltip.style("opacity", "0");
       }
@@ -299,7 +333,7 @@ const Globe: React.FC = () => {
           World Countries Globe
         </h2>
         <p className="text-sm text-muted-foreground">
-          Drag to rotate. Hover a country to see its name.
+          Drag to rotate. Hover a country to see its name and capital.
         </p>
       </header>
       <div
