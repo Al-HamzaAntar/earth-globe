@@ -147,7 +147,13 @@ const Globe: React.FC = () => {
         const countries = topojsonFeature(world, world.objects.countries)
           .features as CountryFeature[];
 
-        featuresRef.current = countries;
+        // Filter out Israel
+        const filteredCountries = countries.filter(country => 
+          country.properties?.name !== 'Israel' && 
+          !country.properties?.name?.toLowerCase().includes('israel')
+        );
+
+        featuresRef.current = filteredCountries;
 
         // Create country info map with fallback capitals
         const countryInfoMap = new Map<string, CountryInfo>();
@@ -297,7 +303,7 @@ const Globe: React.FC = () => {
         countryInfoRef.current = countryInfoMap;
 
         // Find and highlight Yemen by default
-        const yemenCountry = countries.find(country => 
+        const yemenCountry = filteredCountries.find(country => 
           country.properties?.name === "Yemen" || 
           country.properties?.name?.toLowerCase().includes("yemen")
         );
@@ -313,16 +319,29 @@ const Globe: React.FC = () => {
       }
     })();
 
-    // Zoom behavior
+    // Zoom behavior - allow wheel zoom without Ctrl key
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 3])
-      .filter((event) => event.ctrlKey || event.type === 'wheel') // Only zoom with Ctrl+wheel or wheel
+      .filter((event) => {
+        // Allow wheel events for zoom, but prevent drag events from being handled by zoom
+        return event.type === 'wheel' || (event.type === 'mousedown' && event.ctrlKey);
+      })
       .on("start", () => {
         speedRef.current = 0; // Stop auto-rotation
       })
       .on("zoom", (event) => {
-        if (event.transform.k !== currentZoomRef.current) {
+        if (event.sourceEvent && event.sourceEvent.type === 'wheel') {
+          // Update the scale for the projection
           currentZoomRef.current = event.transform.k;
+          
+          // Update projection scale
+          if (projectionRef.current && containerRef.current) {
+            const width = containerRef.current.clientWidth;
+            const height = Math.max(420, Math.min(720, Math.round(width * 0.65)));
+            const radius = (Math.min(width, height) / 2 - 8) * currentZoomRef.current;
+            projectionRef.current.scale(radius);
+          }
+          
           draw();
         }
       });
@@ -375,7 +394,10 @@ const Globe: React.FC = () => {
                            countryInfoRef.current.get(name.toLowerCase()) || 
                            { name, capital: undefined };
         
-        const capital = countryInfo.capital || t('globe.unknown');
+        // Get translated country name and capital
+        const translatedName = t(`countries.${name}`, { defaultValue: name });
+        const originalCapital = countryInfo.capital || t('globe.unknown');
+        const translatedCapital = t(`capitals.${originalCapital}`, { defaultValue: originalCapital });
         
         // Get container bounds for proper positioning
         const containerRect = containerRef.current!.getBoundingClientRect();
@@ -387,8 +409,8 @@ const Globe: React.FC = () => {
         tooltip.style("top", `${mouseY - 8}px`);
         tooltip.html(`
           <div class="space-y-1">
-            <div class="font-medium text-foreground">${name}</div>
-            <div class="text-sm text-muted-foreground">${t('globe.capital')}: ${capital}</div>
+            <div class="font-medium text-foreground">${translatedName}</div>
+            <div class="text-sm text-muted-foreground">${t('globe.capital')}: ${translatedCapital}</div>
           </div>
         `);
       } else {
