@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { feature as topojsonFeature } from "topojson-client";
 import type { Feature as GeoFeature, Polygon, MultiPolygon } from "geojson";
+import { useTranslation } from "react-i18next";
 
 // Types for GeoJSON features with optional name property
 type CountryFeature = GeoFeature<
@@ -20,6 +21,7 @@ const WORLD_TOPO_URL =
 
 
 const Globe: React.FC = () => {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [loading, setLoading] = useState(true);
@@ -311,42 +313,46 @@ const Globe: React.FC = () => {
       }
     })();
 
-    // Combined zoom and drag behavior
+    // Zoom behavior
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 3])
-      .on("start", (event) => {
-        // Stop auto-rotation when user interacts
-        speedRef.current = 0;
+      .filter((event) => event.ctrlKey || event.type === 'wheel') // Only zoom with Ctrl+wheel or wheel
+      .on("start", () => {
+        speedRef.current = 0; // Stop auto-rotation
       })
       .on("zoom", (event) => {
-        // Handle zoom
         if (event.transform.k !== currentZoomRef.current) {
           currentZoomRef.current = event.transform.k;
           draw();
         }
       });
 
-    // Drag behavior for rotation (separate from zoom)
+    // Drag behavior for rotation
     const drag = d3.drag<SVGSVGElement, unknown>()
-      .filter((event) => !event.ctrlKey && !event.button) // Only allow left mouse drag
+      .filter((event) => !event.ctrlKey && event.button === 0) // Only left mouse drag without Ctrl
       .on("start", () => {
         speedRef.current = 0; // Stop auto-rotation
+        svg.style("cursor", "grabbing");
       })
       .on("drag", (event) => {
-        const { dx, dy } = event as any;
+        const { dx, dy } = event;
         rotationRef.current.lambda += dx * 0.25; // yaw
         rotationRef.current.phi = Math.max(
           -60,
           Math.min(60, rotationRef.current.phi - dy * 0.25)
         ); // pitch clamp
         draw();
+      })
+      .on("end", () => {
+        svg.style("cursor", "grab");
       });
 
     zoomRef.current = zoom;
     
-    // Apply zoom first, then drag
+    // Apply behaviors
     svg.call(zoom);
     svg.call(drag);
+    svg.style("cursor", "grab");
 
     // Hover highlight + tooltip
     svg.on("mousemove", (event: MouseEvent) => {
@@ -369,7 +375,7 @@ const Globe: React.FC = () => {
                            countryInfoRef.current.get(name.toLowerCase()) || 
                            { name, capital: undefined };
         
-        const capital = countryInfo.capital || "Unknown";
+        const capital = countryInfo.capital || t('globe.unknown');
         
         // Get container bounds for proper positioning
         const containerRect = containerRef.current!.getBoundingClientRect();
@@ -382,7 +388,7 @@ const Globe: React.FC = () => {
         tooltip.html(`
           <div class="space-y-1">
             <div class="font-medium text-foreground">${name}</div>
-            <div class="text-sm text-muted-foreground">Capital: ${capital}</div>
+            <div class="text-sm text-muted-foreground">${t('globe.capital')}: ${capital}</div>
           </div>
         `);
       } else {
@@ -491,10 +497,10 @@ const Globe: React.FC = () => {
     <section aria-labelledby="globe-title" className="w-full">
       <header className="mb-6 text-center">
         <h2 id="globe-title" className="text-xl font-semibold text-foreground">
-          World Countries Globe
+          {t('globe.title')}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Drag to rotate. Scroll to zoom. Hover a country to see its name and capital.
+          {t('globe.instructions')}
         </p>
       </header>
       <div
@@ -503,7 +509,7 @@ const Globe: React.FC = () => {
       >
         {loading && (
           <div className="absolute inset-0 grid place-items-center text-muted-foreground">
-            Loading map…
+            {t('globe.loading')}
           </div>
         )}
       </div>

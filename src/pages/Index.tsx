@@ -1,8 +1,12 @@
 import { useEffect } from "react";
 import Globe from "@/components/Globe";
 import ThemeToggle from "@/components/ThemeToggle";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useTranslation } from "react-i18next";
 
 const Index = () => {
+  const { t } = useTranslation();
+  
   useEffect(() => {
     const title = "Interactive D3 Globe — World Countries";
     const description =
@@ -46,7 +50,8 @@ const Index = () => {
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="container mx-auto flex items-center justify-end py-4">
+      <div className="container mx-auto flex items-center justify-end gap-2 py-4">
+        <LanguageToggle />
         <ThemeToggle />
       </div>
       <header className="container mx-auto pb-6 text-center">
