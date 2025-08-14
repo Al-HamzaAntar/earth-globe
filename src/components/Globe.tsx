@@ -302,14 +302,26 @@ const Globe: React.FC = () => {
       }
     })();
 
-    // Drag interaction (basic yaw/pitch)
-    const drag = d3
-      .drag<SVGSVGElement, unknown>()
-      .on("start", () => {
-        if (animationRef.current) {
-          // Temporarily slow during drag
-          speedRef.current = 0;
+    // Combined zoom and drag behavior
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.5, 3])
+      .on("start", (event) => {
+        // Stop auto-rotation when user interacts
+        speedRef.current = 0;
+      })
+      .on("zoom", (event) => {
+        // Handle zoom
+        if (event.transform.k !== currentZoomRef.current) {
+          currentZoomRef.current = event.transform.k;
+          draw();
         }
+      });
+
+    // Drag behavior for rotation (separate from zoom)
+    const drag = d3.drag<SVGSVGElement, unknown>()
+      .filter((event) => !event.ctrlKey && !event.button) // Only allow left mouse drag
+      .on("start", () => {
+        speedRef.current = 0; // Stop auto-rotation
       })
       .on("drag", (event) => {
         const { dx, dy } = event as any;
@@ -319,24 +331,13 @@ const Globe: React.FC = () => {
           Math.min(60, rotationRef.current.phi - dy * 0.25)
         ); // pitch clamp
         draw();
-      })
-      .on("end", () => {
-        // Keep rotation stopped
-        speedRef.current = 0;
-      });
-
-    // Add zoom functionality
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.5, 3])
-      .on("zoom", (event) => {
-        currentZoomRef.current = event.transform.k;
-        draw();
       });
 
     zoomRef.current = zoom;
+    
+    // Apply zoom first, then drag
     svg.call(zoom);
-
-    svg.call(drag as any);
+    svg.call(drag);
 
     // Hover highlight + tooltip
     svg.on("mousemove", (event: MouseEvent) => {
