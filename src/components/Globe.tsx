@@ -294,6 +294,15 @@ const Globe: React.FC = () => {
         
         countryInfoRef.current = countryInfoMap;
 
+        // Find and highlight Yemen by default
+        const yemenCountry = countries.find(country => 
+          country.properties?.name === "Yemen" || 
+          country.properties?.name?.toLowerCase().includes("yemen")
+        );
+        if (yemenCountry) {
+          hoveredIdRef.current = yemenCountry.id ?? null;
+        }
+
         setLoading(false);
         draw();
       } catch (e) {
