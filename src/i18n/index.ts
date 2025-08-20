@@ -4,6 +4,10 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   ar: {
     translation: {
+      title: "الكرة الأرضية التفاعلية",
+      subtitle: "كرة أرضية تفاعلية ومتجاوبة تضم جميع دول العالم.",
+      country: "الدولة",
+      capital: "العاصمة",
       'globe.title': 'خريطة دول العالم',
       'globe.instructions': 'اسحب للدوران. قم بالتمرير للتكبير. حرك الماوس فوق دولة لرؤية اسمها وعاصمتها.',
       'globe.loading': 'تحميل الخريطة...',
@@ -127,6 +131,10 @@ const resources = {
   },
   en: {
     translation: {
+      title: "Interactive D3 Globe",
+      subtitle: "A responsive, accessible globe with all world countries.",
+      country: "Country",
+      capital: "Capital",
       'globe.title': 'World Countries Globe',
       'globe.instructions': 'Drag to rotate. Scroll to zoom. Hover a country to see its name and capital.',
       'globe.loading': 'Loading map...',

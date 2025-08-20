@@ -56,10 +56,10 @@ const Index = () => {
       </div>
       <header className="container mx-auto pb-6 text-center">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          Interactive D3 Globe
+          {t('title')}
         </h1>
         <p className="mt-3 text-muted-foreground text-base md:text-lg">
-          A responsive, accessible globe with all world countries.
+          {t('subtitle')}
         </p>
       </header>
       <section className="container mx-auto">
