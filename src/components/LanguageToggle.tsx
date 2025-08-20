@@ -20,7 +20,6 @@ const LanguageToggle: React.FC = () => {
       variant="outline"
       size="sm"
       onClick={toggleLanguage}
-      className="fixed top-4 right-4 z-50"
     >
       <Languages className="h-4 w-4 mr-2" />
       {i18n.language === 'ar' ? 'English' : 'العربية'}
