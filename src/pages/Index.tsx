@@ -50,7 +50,7 @@ const Index = () => {
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="container mx-auto flex items-center justify-between py-4">
+      <div className="container mx-auto flex items-center justify-end gap-2 py-4">
         <LanguageToggle />
         <ThemeToggle />
       </div>
