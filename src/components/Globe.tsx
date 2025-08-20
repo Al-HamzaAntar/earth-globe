@@ -502,23 +502,35 @@ const Globe: React.FC = () => {
       .selectAll<SVGPathElement, CountryFeature>("path")
       .data(featuresRef.current, (d: any) => d?.id ?? (d?.properties?.name ?? ""));
 
-    countries
+        countries
       .join((enter) =>
         enter
           .append("path")
           .attr("d", path as any)
           .attr("data-id", (d) => String(d.id ?? d.properties?.name ?? ""))
           .attr("class", (d) => {
-            const highlighted = hoveredIdRef.current === (d.id ?? null);
-            return highlighted
+            const isYemen = d.properties?.name === "Yemen" || 
+                           d.properties?.name?.toLowerCase().includes("yemen");
+            const isHovered = hoveredIdRef.current === (d.id ?? null);
+            
+            if (isYemen) {
+              return `${baseClasses} fill-white stroke-white stroke-2`;
+            }
+            return isHovered
               ? `${baseClasses} fill-primary fill-opacity-60`
               : `${baseClasses} fill-card`;
           })
       )
       .attr("d", path as any)
       .attr("class", (d) => {
-        const highlighted = hoveredIdRef.current === (d.id ?? null);
-        return highlighted
+        const isYemen = d.properties?.name === "Yemen" || 
+                       d.properties?.name?.toLowerCase().includes("yemen");
+        const isHovered = hoveredIdRef.current === (d.id ?? null);
+        
+        if (isYemen) {
+          return `${baseClasses} fill-white stroke-white stroke-2`;
+        }
+        return isHovered
           ? `${baseClasses} fill-primary fill-opacity-60`
           : `${baseClasses} fill-card`;
       });
