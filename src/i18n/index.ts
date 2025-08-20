@@ -98,7 +98,7 @@ const resources = {
         'Abu Dhabi': 'أبو ظبي',
         'Muscat': 'مسقط',
         'Manama': 'المنامة',
-        'Ramallah': 'رام الله',
+        'Jerusalem': 'القدس',
         'Rabat': 'الرباط',
         'Algiers': 'الجزائر',
         'Tunis': 'تونس',

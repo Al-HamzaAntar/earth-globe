@@ -147,13 +147,22 @@ const Globe: React.FC = () => {
         const countries = topojsonFeature(world, world.objects.countries)
           .features as CountryFeature[];
 
-        // Filter out Israel
-        const filteredCountries = countries.filter(country => 
-          country.properties?.name !== 'Israel' && 
-          !country.properties?.name?.toLowerCase().includes('israel')
-        );
+        // Replace Israel with Palestine
+        const modifiedCountries = countries.map(country => {
+          if (country.properties?.name === 'Israel' || 
+              country.properties?.name?.toLowerCase().includes('israel')) {
+            return {
+              ...country,
+              properties: {
+                ...country.properties,
+                name: 'Palestine'
+              }
+            };
+          }
+          return country;
+        });
 
-        featuresRef.current = filteredCountries;
+        featuresRef.current = modifiedCountries;
 
         // Create country info map with fallback capitals
         const countryInfoMap = new Map<string, CountryInfo>();
@@ -193,7 +202,7 @@ const Globe: React.FC = () => {
           "Iran": "Tehran",
           "Iraq": "Baghdad",
           "Saudi Arabia": "Riyadh",
-          "Israel": "Jerusalem",
+          "Palestine": "Jerusalem",
           "Jordan": "Amman",
           "Lebanon": "Beirut",
           "Syria": "Damascus",
@@ -303,7 +312,7 @@ const Globe: React.FC = () => {
         countryInfoRef.current = countryInfoMap;
 
         // Find and highlight Yemen by default
-        const yemenCountry = filteredCountries.find(country => 
+        const yemenCountry = modifiedCountries.find(country => 
           country.properties?.name === "Yemen" || 
           country.properties?.name?.toLowerCase().includes("yemen")
         );
