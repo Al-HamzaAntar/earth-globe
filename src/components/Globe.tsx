@@ -404,10 +404,24 @@ const Globe: React.FC = () => {
                            countryInfoRef.current.get(name.toLowerCase()) || 
                            { name, capital: undefined };
         
-        // Get translated country name and capital
-        const translatedName = t(`countries.${name}`, { defaultValue: name });
-        const originalCapital = countryInfo.capital || t('globe.unknown');
-        const translatedCapital = t(`capitals.${originalCapital}`, { defaultValue: originalCapital });
+        // Get translated country name and capital based on current language
+        let translatedName: string;
+        let translatedCapital: string;
+        
+        if (i18n.language === 'ar') {
+          // In Arabic mode, only show Arabic translations
+          translatedName = t(`countries.${name}`, { defaultValue: '' });
+          const originalCapital = countryInfo.capital || '';
+          translatedCapital = originalCapital ? t(`capitals.${originalCapital}`, { defaultValue: '' }) : '';
+          
+          // If no Arabic translation exists, don't show the tooltip
+          if (!translatedName) return;
+        } else {
+          // In English mode, show English with fallbacks
+          translatedName = t(`countries.${name}`, { defaultValue: name });
+          const originalCapital = countryInfo.capital || t('globe.unknown');
+          translatedCapital = t(`capitals.${originalCapital}`, { defaultValue: originalCapital });
+        }
         
         // Get container bounds for proper positioning
         const containerRect = containerRef.current!.getBoundingClientRect();
