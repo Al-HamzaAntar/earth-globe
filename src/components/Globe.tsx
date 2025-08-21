@@ -514,7 +514,7 @@ const Globe: React.FC = () => {
             const isHovered = hoveredIdRef.current === (d.id ?? null);
             
             if (isYemen) {
-              return `${baseClasses} fill-white stroke-white stroke-2`;
+              return `${baseClasses} fill-foreground stroke-foreground stroke-2`;
             }
             return isHovered
               ? `${baseClasses} fill-primary fill-opacity-60`
@@ -528,7 +528,7 @@ const Globe: React.FC = () => {
         const isHovered = hoveredIdRef.current === (d.id ?? null);
         
         if (isYemen) {
-          return `${baseClasses} fill-white stroke-white stroke-2`;
+          return `${baseClasses} fill-foreground stroke-foreground stroke-2`;
         }
         return isHovered
           ? `${baseClasses} fill-primary fill-opacity-60`
