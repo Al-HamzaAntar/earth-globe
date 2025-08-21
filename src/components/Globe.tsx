@@ -3,6 +3,7 @@ import * as d3 from "d3";
 import { feature as topojsonFeature } from "topojson-client";
 import type { Feature as GeoFeature, Polygon, MultiPolygon } from "geojson";
 import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 // Types for GeoJSON features with optional name property
 type CountryFeature = GeoFeature<
@@ -417,7 +418,7 @@ const Globe: React.FC = () => {
         tooltip.style("left", `${mouseX + 12}px`);
         tooltip.style("top", `${mouseY - 8}px`);
         tooltip.html(`
-          <div class="space-y-1">
+          <div class="space-y-1" dir="${i18n.language === 'ar' ? 'rtl' : 'ltr'}">
             <div class="font-medium text-foreground">${translatedName}</div>
             <div class="text-sm text-muted-foreground">${t('globe.capital')}: ${translatedCapital}</div>
           </div>
