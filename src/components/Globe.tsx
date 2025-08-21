@@ -511,7 +511,13 @@ const Globe: React.FC = () => {
           .attr("class", (d) => {
             const isYemen = d.properties?.name === "Yemen" || 
                            d.properties?.name?.toLowerCase().includes("yemen");
-            const isHovered = hoveredIdRef.current === (d.id ?? null);
+            const isExcluded = d.properties?.name === "Somaliland" ||
+                              d.properties?.name === "N. Cyprus" ||
+                              d.properties?.name === "Kosovo" ||
+                              d.properties?.name?.toLowerCase().includes("somaliland") ||
+                              d.properties?.name?.toLowerCase().includes("cyprus") ||
+                              d.properties?.name?.toLowerCase().includes("kosovo");
+            const isHovered = hoveredIdRef.current === (d.id ?? null) && !isExcluded;
             
             if (isYemen) {
               return `${baseClasses} fill-foreground stroke-foreground stroke-2`;
@@ -525,7 +531,13 @@ const Globe: React.FC = () => {
       .attr("class", (d) => {
         const isYemen = d.properties?.name === "Yemen" || 
                        d.properties?.name?.toLowerCase().includes("yemen");
-        const isHovered = hoveredIdRef.current === (d.id ?? null);
+        const isExcluded = d.properties?.name === "Somaliland" ||
+                          d.properties?.name === "N. Cyprus" ||
+                          d.properties?.name === "Kosovo" ||
+                          d.properties?.name?.toLowerCase().includes("somaliland") ||
+                          d.properties?.name?.toLowerCase().includes("cyprus") ||
+                          d.properties?.name?.toLowerCase().includes("kosovo");
+        const isHovered = hoveredIdRef.current === (d.id ?? null) && !isExcluded;
         
         if (isYemen) {
           return `${baseClasses} fill-foreground stroke-foreground stroke-2`;
