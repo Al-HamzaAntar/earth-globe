@@ -13,6 +13,12 @@ const resources = {
       'globe.loading': 'تحميل الخريطة...',
       'globe.capital': 'العاصمة',
       'globe.unknown': 'غير معروف',
+      'search.placeholder': 'ابحث عن دولة...',
+      'search.button': 'بحث',
+      'search.success': 'تم العثور على الدولة',
+      'search.found': 'تم العثور على الدولة بنجاح على الكرة الأرضية.',
+      'search.error': 'لم يتم العثور على الدولة',
+      'search.notFound': 'لا يمكن العثور على الدولة المحددة. يرجى المحاولة باسم مختلف.',
       // Country names in Arabic
       'countries': {
         // Arab World
@@ -423,6 +429,12 @@ const resources = {
       'globe.loading': 'Loading map...',
       'globe.capital': 'Capital',
       'globe.unknown': 'Unknown',
+      'search.placeholder': 'Search for a country...',
+      'search.button': 'Search',
+      'search.success': 'Country Found',
+      'search.found': 'Successfully located the country on the globe.',
+      'search.error': 'Country Not Found',
+      'search.notFound': 'Could not find the specified country. Please try a different name.',
       'countries': {},
       'capitals': {}
     }

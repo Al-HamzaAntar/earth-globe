@@ -1,11 +1,33 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Globe from "@/components/Globe";
+import CountrySearch from "@/components/CountrySearch";
 import ThemeToggle from "@/components/ThemeToggle";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useTranslation } from "react-i18next";
+import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
   const { t, i18n } = useTranslation();
+  const [searchCountry, setSearchCountry] = useState<string>("");
+
+  const handleCountrySearch = (countryName: string) => {
+    setSearchCountry(countryName);
+  };
+
+  const handleCountryFound = (found: boolean) => {
+    if (found) {
+      toast({
+        title: t('search.success'),
+        description: t('search.found'),
+      });
+    } else {
+      toast({
+        title: t('search.error'),
+        description: t('search.notFound'),
+        variant: "destructive",
+      });
+    }
+  };
   
   useEffect(() => {
     const title = "Interactive D3 Globe — World Countries";
@@ -63,7 +85,8 @@ const Index = () => {
         </p>
       </header>
       <section className="container mx-auto">
-        <Globe />
+        <CountrySearch onCountrySearch={handleCountrySearch} />
+        <Globe searchCountry={searchCountry} onCountryFound={handleCountryFound} />
       </section>
     </main>
   );

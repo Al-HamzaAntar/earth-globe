@@ -21,7 +21,12 @@ const WORLD_TOPO_URL =
   "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 
-const Globe: React.FC = () => {
+interface GlobeProps {
+  searchCountry?: string;
+  onCountryFound?: (found: boolean) => void;
+}
+
+const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -38,6 +43,94 @@ const Globe: React.FC = () => {
     null
   );
   const hoveredIdRef = useRef<string | number | null>(null);
+
+  // Search functionality
+  const searchForCountry = (searchTerm: string) => {
+    const features = featuresRef.current;
+    if (!features.length || !projectionRef.current) {
+      onCountryFound?.(false);
+      return;
+    }
+
+    // Normalize search term
+    const normalizedSearch = searchTerm.toLowerCase().trim();
+    
+    // Find country by name (both original and translated)
+    const foundCountry = features.find(country => {
+      const originalName = country.properties?.name?.toLowerCase() || '';
+      
+      // Check original name
+      if (originalName.includes(normalizedSearch)) return true;
+      
+      // Check translated names
+      if (i18n.language === 'ar') {
+        const arabicName = t(`countries.${country.properties?.name}`, { defaultValue: '' }).toLowerCase();
+        if (arabicName && arabicName.includes(normalizedSearch)) return true;
+      } else {
+        const englishName = t(`countries.${country.properties?.name}`, { defaultValue: country.properties?.name || '' }).toLowerCase();
+        if (englishName.includes(normalizedSearch)) return true;
+      }
+      
+      return false;
+    });
+
+    if (foundCountry) {
+      // Get the centroid of the country
+      const centroid = d3.geoPath().centroid(foundCountry as any);
+      if (centroid && !isNaN(centroid[0]) && !isNaN(centroid[1])) {
+        // Calculate rotation to center the country
+        const lambda = -centroid[0];
+        const phi = -centroid[1];
+        
+        // Smoothly rotate to the country
+        const startLambda = rotationRef.current.lambda;
+        const startPhi = rotationRef.current.phi;
+        
+        const targetLambda = lambda;
+        const targetPhi = Math.max(-60, Math.min(60, phi));
+        
+        // Animate rotation
+        const duration = 1000;
+        const startTime = performance.now();
+        
+        const animateToCountry = (currentTime: number) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          
+          // Easing function
+          const easeInOut = progress < 0.5 
+            ? 2 * progress * progress 
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+          
+          rotationRef.current.lambda = startLambda + (targetLambda - startLambda) * easeInOut;
+          rotationRef.current.phi = startPhi + (targetPhi - startPhi) * easeInOut;
+          
+          // Highlight the found country
+          hoveredIdRef.current = foundCountry.id ?? null;
+          
+          draw();
+          
+          if (progress < 1) {
+            requestAnimationFrame(animateToCountry);
+          }
+        };
+        
+        requestAnimationFrame(animateToCountry);
+        onCountryFound?.(true);
+      } else {
+        onCountryFound?.(false);
+      }
+    } else {
+      onCountryFound?.(false);
+    }
+  };
+
+  // Handle search when searchCountry prop changes
+  useEffect(() => {
+    if (searchCountry && featuresRef.current.length > 0) {
+      searchForCountry(searchCountry);
+    }
+  }, [searchCountry]);
 
   // Resize handling for responsiveness
   useEffect(() => {
