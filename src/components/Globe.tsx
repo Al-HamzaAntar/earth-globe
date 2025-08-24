@@ -409,10 +409,13 @@ const Globe: React.FC = () => {
         let translatedCapital: string;
         
         if (i18n.language === 'ar') {
-          // In Arabic mode, prefer Arabic translations but fallback to original names
-          translatedName = t(`countries.${name}`, { defaultValue: name });
-          const originalCapital = countryInfo.capital || t('globe.unknown');
-          translatedCapital = originalCapital ? t(`capitals.${originalCapital}`, { defaultValue: originalCapital }) : t('globe.unknown');
+          // In Arabic mode, only show Arabic translations
+          translatedName = t(`countries.${name}`, { defaultValue: '' });
+          const originalCapital = countryInfo.capital || '';
+          translatedCapital = originalCapital ? t(`capitals.${originalCapital}`, { defaultValue: '' }) : '';
+          
+          // If no Arabic translation exists, don't show the tooltip
+          if (!translatedName) return;
         } else {
           // In English mode, show English with fallbacks
           translatedName = t(`countries.${name}`, { defaultValue: name });
