@@ -19,6 +19,15 @@ const resources = {
       'search.found': 'تم العثور على الدولة بنجاح على الكرة الأرضية.',
       'search.error': 'لم يتم العثور على الدولة',
       'search.notFound': 'لا يمكن العثور على الدولة المحددة. يرجى المحاولة باسم مختلف.',
+      'countryInfo.loading': 'جاري التحميل...',
+      'countryInfo.capital': 'العاصمة',
+      'countryInfo.population': 'عدد السكان',
+      'countryInfo.area': 'المساحة',
+      'countryInfo.languages': 'اللغات',
+      'countryInfo.currency': 'العملة',
+      'countryInfo.region': 'المنطقة',
+      'countryInfo.unknown': 'غير معروف',
+      'countryInfo.km2': 'كم²',
       // Country names in Arabic
       'countries': {
         // Arab World
@@ -435,6 +444,15 @@ const resources = {
       'search.found': 'Successfully located the country on the globe.',
       'search.error': 'Country Not Found',
       'search.notFound': 'Could not find the specified country. Please try a different name.',
+      'countryInfo.loading': 'Loading...',
+      'countryInfo.capital': 'Capital',
+      'countryInfo.population': 'Population',
+      'countryInfo.area': 'Area',
+      'countryInfo.languages': 'Languages',
+      'countryInfo.currency': 'Currency',
+      'countryInfo.region': 'Region',
+      'countryInfo.unknown': 'Unknown',
+      'countryInfo.km2': 'km²',
       'countries': {},
       'capitals': {}
     }

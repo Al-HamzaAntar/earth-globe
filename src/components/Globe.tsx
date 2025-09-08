@@ -4,6 +4,7 @@ import { feature as topojsonFeature } from "topojson-client";
 import type { Feature as GeoFeature, Polygon, MultiPolygon } from "geojson";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
+import CountryInfoDialog, { type CountryData } from "./CountryInfoDialog";
 
 // Types for GeoJSON features with optional name property
 type CountryFeature = GeoFeature<
@@ -31,6 +32,9 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedCountryData, setSelectedCountryData] = useState<CountryData | null>(null);
+  const [countryDataLoading, setCountryDataLoading] = useState(false);
   const animationRef = useRef<number | null>(null);
   const rotationRef = useRef({ lambda: 0, phi: -15 });
   const speedRef = useRef(0); // Disabled rotation
@@ -43,6 +47,38 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
     null
   );
   const hoveredIdRef = useRef<string | number | null>(null);
+
+  // Function to fetch detailed country data
+  const fetchCountryData = async (countryName: string): Promise<CountryData | null> => {
+    try {
+      setCountryDataLoading(true);
+      const response = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fullText=true`);
+      if (!response.ok) throw new Error('Country not found');
+      
+      const data = await response.json();
+      const country = data[0];
+      
+      return {
+        name: country.name?.common || countryName,
+        capital: country.capital?.[0],
+        population: country.population,
+        area: country.area,
+        currencies: country.currencies,
+        languages: country.languages,
+        flags: country.flags,
+        region: country.region,
+        subregion: country.subregion,
+      };
+    } catch (error) {
+      console.error('Failed to fetch country data:', error);
+      return {
+        name: countryName,
+        capital: countryInfoRef.current.get(countryName)?.capital,
+      };
+    } finally {
+      setCountryDataLoading(false);
+    }
+  };
 
   // Search functionality
   const searchForCountry = (searchTerm: string) => {
@@ -541,6 +577,33 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
       tooltip.style("opacity", "0");
     });
 
+    // Click handler for country info dialog
+    svg.on("click", async (event: MouseEvent) => {
+      if (!projectionRef.current || !pathRef.current) return;
+      const [x, y] = d3.pointer(event);
+      const p = projectionRef.current.invert([x, y]);
+      if (!p) return;
+
+      const clicked = featuresRef.current.find((f) => d3.geoContains(f as any, p));
+      if (clicked && clicked.properties?.name) {
+        const countryName = clicked.properties.name;
+        
+        // Check if it's an excluded country
+        const isExcluded = countryName === "Somaliland" ||
+                          countryName === "N. Cyprus" ||
+                          countryName === "Kosovo" ||
+                          countryName.toLowerCase().includes("somaliland") ||
+                          countryName.toLowerCase().includes("cyprus") ||
+                          countryName.toLowerCase().includes("kosovo");
+        
+        if (!isExcluded) {
+          setDialogOpen(true);
+          const countryData = await fetchCountryData(countryName);
+          setSelectedCountryData(countryData);
+        }
+      }
+    });
+
     // Auto-rotation animation
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) speedRef.current = 0;
@@ -657,26 +720,35 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
   };
 
   return (
-    <section aria-labelledby="globe-title" className="w-full">
-      <header className="mb-6 text-center">
-        <h2 id="globe-title" className="text-xl font-semibold text-foreground">
-          {t('globe.title')}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {t('globe.instructions')}
-        </p>
-      </header>
-      <div
-        ref={containerRef}
-        className="relative w-full mx-auto rounded-xl border border-border bg-card shadow-sm"
-      >
-        {loading && (
-          <div className="absolute inset-0 grid place-items-center text-muted-foreground">
-            {t('globe.loading')}
-          </div>
-        )}
-      </div>
-    </section>
+    <>
+      <section aria-labelledby="globe-title" className="w-full">
+        <header className="mb-6 text-center">
+          <h2 id="globe-title" className="text-xl font-semibold text-foreground">
+            {t('globe.title')}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t('globe.instructions')}
+          </p>
+        </header>
+        <div
+          ref={containerRef}
+          className="relative w-full mx-auto rounded-xl border border-border bg-card shadow-sm"
+        >
+          {loading && (
+            <div className="absolute inset-0 grid place-items-center text-muted-foreground">
+              {t('globe.loading')}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <CountryInfoDialog
+        isOpen={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        countryData={selectedCountryData}
+        loading={countryDataLoading}
+      />
+    </>
   );
 };
 
