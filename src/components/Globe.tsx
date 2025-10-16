@@ -62,6 +62,7 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
       const nameArabic = country.translations?.ara?.common;
       const capitalArabic = country.capital?.[0] ? t(`capitals.${country.capital[0]}`, { defaultValue: '' }) : undefined;
       const regionArabic = country.region ? t(`regions.${country.region}`, { defaultValue: '' }) : undefined;
+      const subregionArabic = country.subregion ? t(`subregions.${country.subregion}`, { defaultValue: '' }) : undefined;
       
       return {
         name: country.name?.common || countryName,
@@ -76,7 +77,7 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
         region: country.region,
         regionArabic: regionArabic || undefined,
         subregion: country.subregion,
-        subregionArabic: undefined,
+        subregionArabic: subregionArabic || undefined,
       };
     } catch (error) {
       console.error('Failed to fetch country data:', error);

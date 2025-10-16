@@ -37,6 +37,32 @@ const resources = {
         'Oceania': 'أوقيانوسيا',
         'Antarctic': 'القارة القطبية الجنوبية',
       },
+      // Subregions in Arabic
+      'subregions': {
+        'Northern Africa': 'شمال أفريقيا',
+        'Eastern Africa': 'شرق أفريقيا',
+        'Middle Africa': 'وسط أفريقيا',
+        'Southern Africa': 'جنوب أفريقيا',
+        'Western Africa': 'غرب أفريقيا',
+        'Northern Europe': 'شمال أوروبا',
+        'Eastern Europe': 'شرق أوروبا',
+        'Southern Europe': 'جنوب أوروبا',
+        'Western Europe': 'غرب أوروبا',
+        'Central Europe': 'وسط أوروبا',
+        'Northern America': 'أمريكا الشمالية',
+        'Central America': 'أمريكا الوسطى',
+        'Caribbean': 'الكاريبي',
+        'South America': 'أمريكا الجنوبية',
+        'Western Asia': 'غرب آسيا',
+        'Central Asia': 'وسط آسيا',
+        'Southern Asia': 'جنوب آسيا',
+        'South-Eastern Asia': 'جنوب شرق آسيا',
+        'Eastern Asia': 'شرق آسيا',
+        'Australia and New Zealand': 'أستراليا ونيوزيلندا',
+        'Melanesia': 'ميلانيزيا',
+        'Micronesia': 'ميكرونيزيا',
+        'Polynesia': 'بولينيزيا',
+      },
       // Country names in Arabic
       'countries': {
         // Arab World
@@ -463,6 +489,7 @@ const resources = {
       'countryInfo.unknown': 'Unknown',
       'countryInfo.km2': 'km²',
       'regions': {},
+      'subregions': {},
       'countries': {},
       'capitals': {}
     }
