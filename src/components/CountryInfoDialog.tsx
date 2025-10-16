@@ -52,12 +52,31 @@ const CountryInfoDialog: React.FC<CountryInfoDialogProps> = ({
 
   const getLanguages = () => {
     if (!countryData?.languages) return t('countryInfo.unknown');
-    return Object.values(countryData.languages).join(', ');
+    const languagesList = Object.values(countryData.languages);
+    
+    if (i18n.language === 'ar') {
+      return languagesList
+        .map(lang => t(`languages.${lang}`, { defaultValue: lang }))
+        .join('، ');
+    }
+    
+    return languagesList.join(', ');
   };
 
   const getCurrencies = () => {
     if (!countryData?.currencies) return t('countryInfo.unknown');
-    return Object.values(countryData.currencies)
+    const currenciesList = Object.values(countryData.currencies);
+    
+    if (i18n.language === 'ar') {
+      return currenciesList
+        .map(curr => {
+          const translatedName = t(`currencies.${curr.name}`, { defaultValue: curr.name });
+          return curr.symbol ? `${translatedName} (${curr.symbol})` : translatedName;
+        })
+        .join('، ');
+    }
+    
+    return currenciesList
       .map(curr => curr.symbol ? `${curr.name} (${curr.symbol})` : curr.name)
       .join(', ');
   };
