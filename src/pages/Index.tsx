@@ -30,10 +30,16 @@ const Index = () => {
   };
   
   useEffect(() => {
-    const title = "Interactive D3 Globe — World Countries";
-    const description =
-      "Explore a spinning D3.js globe with all world countries. Drag to rotate and hover to see names and details.";
+    const title = i18n.language === 'ar' 
+      ? 'الكرة الأرضية التفاعلية - دول العالم'
+      : 'Interactive D3 Globe — World Countries';
+    const description = i18n.language === 'ar'
+      ? 'استكشف كرة أرضية دوارة تحتوي على جميع دول العالم. اسحب للدوران ومرر الماوس لرؤية الأسماء والتفاصيل.'
+      : 'Explore a spinning D3.js globe with all world countries. Drag to rotate and hover to see names and details.';
+    
     document.title = title;
+    document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = i18n.language;
 
     const setMeta = (name: string, content: string) => {
       let el = document.querySelector(`meta[name="${name}"]`);
@@ -68,7 +74,7 @@ const Index = () => {
       document.head.appendChild(link);
     }
     link.href = window.location.href;
-  }, []);
+  }, [i18n.language]);
 
   return (
     <main className="min-h-screen bg-background">
