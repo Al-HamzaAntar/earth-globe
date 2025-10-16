@@ -11,7 +11,9 @@ import { Separator } from "@/components/ui/separator";
 
 export interface CountryData {
   name: string;
+  nameArabic?: string;
   capital?: string;
+  capitalArabic?: string;
   population?: number;
   area?: number;
   currencies?: { [key: string]: { name: string; symbol?: string } };
@@ -22,7 +24,9 @@ export interface CountryData {
     alt?: string;
   };
   region?: string;
+  regionArabic?: string;
   subregion?: string;
+  subregionArabic?: string;
 }
 
 interface CountryInfoDialogProps {
@@ -58,6 +62,22 @@ const CountryInfoDialog: React.FC<CountryInfoDialogProps> = ({
       .join(', ');
   };
 
+  const displayName = i18n.language === 'ar' && countryData?.nameArabic 
+    ? countryData.nameArabic 
+    : countryData?.name;
+
+  const displayCapital = i18n.language === 'ar' && countryData?.capitalArabic
+    ? countryData.capitalArabic
+    : countryData?.capital;
+
+  const displayRegion = i18n.language === 'ar' && countryData?.regionArabic
+    ? countryData.regionArabic
+    : countryData?.region;
+
+  const displaySubregion = i18n.language === 'ar' && countryData?.subregionArabic
+    ? countryData.subregionArabic
+    : countryData?.subregion;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
@@ -66,11 +86,11 @@ const CountryInfoDialog: React.FC<CountryInfoDialogProps> = ({
             {countryData?.flags?.png && (
               <img 
                 src={countryData.flags.png} 
-                alt={countryData.flags.alt || `${countryData.name} flag`}
+                alt={countryData.flags.alt || `${displayName} flag`}
                 className="w-8 h-6 object-cover rounded border"
               />
             )}
-            <span>{countryData?.name || t('countryInfo.loading')}</span>
+            <span>{displayName || t('countryInfo.loading')}</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -86,7 +106,7 @@ const CountryInfoDialog: React.FC<CountryInfoDialogProps> = ({
                 {t('countryInfo.capital')}
               </div>
               <div className="text-base">
-                {countryData.capital || t('countryInfo.unknown')}
+                {displayCapital || t('countryInfo.unknown')}
               </div>
             </div>
 
@@ -143,7 +163,7 @@ const CountryInfoDialog: React.FC<CountryInfoDialogProps> = ({
             </div>
 
             {/* Region */}
-            {countryData.region && (
+            {displayRegion && (
               <>
                 <Separator />
                 <div>
@@ -151,9 +171,9 @@ const CountryInfoDialog: React.FC<CountryInfoDialogProps> = ({
                     {t('countryInfo.region')}
                   </div>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    <Badge variant="secondary">{countryData.region}</Badge>
-                    {countryData.subregion && (
-                      <Badge variant="outline">{countryData.subregion}</Badge>
+                    <Badge variant="secondary">{displayRegion}</Badge>
+                    {displaySubregion && (
+                      <Badge variant="outline">{displaySubregion}</Badge>
                     )}
                   </div>
                 </div>

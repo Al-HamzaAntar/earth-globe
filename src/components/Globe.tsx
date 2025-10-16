@@ -58,16 +58,25 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
       const data = await response.json();
       const country = data[0];
       
+      // Get Arabic translations
+      const nameArabic = country.translations?.ara?.common;
+      const capitalArabic = country.capital?.[0] ? t(`capitals.${country.capital[0]}`, { defaultValue: '' }) : undefined;
+      const regionArabic = country.region ? t(`regions.${country.region}`, { defaultValue: '' }) : undefined;
+      
       return {
         name: country.name?.common || countryName,
+        nameArabic: nameArabic || undefined,
         capital: country.capital?.[0],
+        capitalArabic: capitalArabic || undefined,
         population: country.population,
         area: country.area,
         currencies: country.currencies,
         languages: country.languages,
         flags: country.flags,
         region: country.region,
+        regionArabic: regionArabic || undefined,
         subregion: country.subregion,
+        subregionArabic: undefined,
       };
     } catch (error) {
       console.error('Failed to fetch country data:', error);

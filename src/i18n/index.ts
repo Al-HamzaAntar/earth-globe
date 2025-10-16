@@ -28,6 +28,15 @@ const resources = {
       'countryInfo.region': 'المنطقة',
       'countryInfo.unknown': 'غير معروف',
       'countryInfo.km2': 'كم²',
+      // Regions in Arabic
+      'regions': {
+        'Africa': 'أفريقيا',
+        'Americas': 'الأمريكتين',
+        'Asia': 'آسيا',
+        'Europe': 'أوروبا',
+        'Oceania': 'أوقيانوسيا',
+        'Antarctic': 'القارة القطبية الجنوبية',
+      },
       // Country names in Arabic
       'countries': {
         // Arab World
@@ -453,6 +462,7 @@ const resources = {
       'countryInfo.region': 'Region',
       'countryInfo.unknown': 'Unknown',
       'countryInfo.km2': 'km²',
+      'regions': {},
       'countries': {},
       'capitals': {}
     }
