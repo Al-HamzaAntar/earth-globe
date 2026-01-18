@@ -1,6 +1,5 @@
 ## Project info
 
-**URL**: https://earth-globe.lovable.app/
 
 Follow these steps:
 
