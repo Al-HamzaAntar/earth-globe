@@ -1,5 +1,6 @@
 ## Project info
 
+<img src="/public/globe.png" alt="globe">
 
 Follow these steps:
 
