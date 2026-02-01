@@ -3,12 +3,22 @@ import Globe from "@/components/Globe";
 import CountrySearch from "@/components/CountrySearch";
 import ThemeToggle from "@/components/ThemeToggle";
 import LanguageToggle from "@/components/LanguageToggle";
+import Loader from "@/components/Loader";
 import { useTranslation } from "react-i18next";
 import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
   const { t, i18n } = useTranslation();
   const [searchCountry, setSearchCountry] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading time for the globe to initialize
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleCountrySearch = (countryName: string) => {
     setSearchCountry(countryName);
@@ -75,6 +85,10 @@ const Index = () => {
     }
     link.href = window.location.href;
   }, [i18n.language]);
+
+  if (isLoading) {
+    return <Loader />;
+  }
 
   return (
     <main className="min-h-screen bg-background">
