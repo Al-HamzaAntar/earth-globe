@@ -108,6 +108,16 @@ const Index = () => {
         <CountrySearch onCountrySearch={handleCountrySearch} />
         <Globe searchCountry={searchCountry} onCountryFound={handleCountryFound} />
       </section>
+      <footer className="container mx-auto py-6 text-center">
+        <a 
+          href="https://alhamzaantar.onrender.com/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-sm text-muted-foreground hover:text-primary transition-colors"
+        >
+          {i18n.language === 'ar' ? 'طور بواسطة الحمزة عنتر' : 'Developed by Al-Hamza Antar'}
+        </a>
+      </footer>
     </main>
   );
 };
