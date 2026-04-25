@@ -102,24 +102,22 @@ const CountryInfoDialog: React.FC<CountryInfoDialogProps> = ({
       <DialogContent className="max-w-md mx-auto" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
         <DialogHeader>
           {(countryData?.flags?.svg || countryData?.flags?.png) && (
-            <div className="w-full overflow-hidden rounded-lg border bg-muted shadow-sm mb-3">
+            <div className="w-full flex items-center justify-center overflow-hidden rounded-lg border bg-muted shadow-sm mb-3 aspect-[3/2]">
               <img
                 src={countryData.flags.svg || countryData.flags.png}
                 alt={countryData.flags.alt || `${displayName} flag`}
                 loading="lazy"
-                className="w-full h-40 object-contain bg-background"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (countryData?.flags?.png && img.src !== countryData.flags.png) {
+                    img.src = countryData.flags.png;
+                  }
+                }}
+                className="w-full h-full object-contain"
               />
             </div>
           )}
-          <DialogTitle className="flex items-center gap-3 text-xl">
-            {countryData?.flags?.png && (
-              <img
-                src={countryData.flags.png}
-                alt=""
-                aria-hidden="true"
-                className="w-8 h-6 object-cover rounded border shadow-sm flex-shrink-0"
-              />
-            )}
+          <DialogTitle className="text-xl">
             <span>{displayName || t('countryInfo.loading')}</span>
           </DialogTitle>
         </DialogHeader>
