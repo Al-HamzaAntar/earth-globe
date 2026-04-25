@@ -101,12 +101,23 @@ const CountryInfoDialog: React.FC<CountryInfoDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            {countryData?.flags?.png && (
-              <img 
-                src={countryData.flags.png} 
+          {(countryData?.flags?.svg || countryData?.flags?.png) && (
+            <div className="w-full overflow-hidden rounded-lg border bg-muted shadow-sm mb-3">
+              <img
+                src={countryData.flags.svg || countryData.flags.png}
                 alt={countryData.flags.alt || `${displayName} flag`}
-                className="w-8 h-6 object-cover rounded border"
+                loading="lazy"
+                className="w-full h-40 object-contain bg-background"
+              />
+            </div>
+          )}
+          <DialogTitle className="flex items-center gap-3 text-xl">
+            {countryData?.flags?.png && (
+              <img
+                src={countryData.flags.png}
+                alt=""
+                aria-hidden="true"
+                className="w-8 h-6 object-cover rounded border shadow-sm flex-shrink-0"
               />
             )}
             <span>{displayName || t('countryInfo.loading')}</span>
