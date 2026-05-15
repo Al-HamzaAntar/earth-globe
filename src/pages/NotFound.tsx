@@ -9,6 +9,18 @@ const NotFound = () => {
       "404 Error: User attempted to access non-existent route:",
       location.pathname
     );
+    document.title = "Page not found — Globe of Lands";
+    const setMeta = (name: string, content: string) => {
+      let el = document.querySelector(`meta[name="${name}"]`);
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute("name", name);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", content);
+    };
+    setMeta("description", "The page you're looking for doesn't exist. Return to the interactive 3D globe home page.");
+    setMeta("robots", "noindex");
   }, [location.pathname]);
 
   return (

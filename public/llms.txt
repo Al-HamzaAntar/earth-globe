@@ -1,0 +1,7 @@
+# Globe of Lands
+
+> Interactive 3D globe to explore every country in the world, with bilingual Arabic and English details about languages, currency, and capitals.
+
+## Pages
+
+- [Home](/): Spin the 3D globe, search any country, and view its details.
