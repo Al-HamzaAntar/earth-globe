@@ -97,14 +97,16 @@ const CountryInfoDialog: React.FC<CountryInfoDialogProps> = ({
     ? countryData.subregionArabic
     : countryData?.subregion;
 
+  const flagSrc = countryData?.flags?.svg || countryData?.flags?.png;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            {countryData?.flags?.png && (
+            {flagSrc && (
               <img 
-                src={countryData.flags.svg || countryData.flags.png} 
+                src={flagSrc} 
                 alt={countryData.flags.alt || `${displayName} flag`}
                 loading="lazy"
                 onError={(e) => {
