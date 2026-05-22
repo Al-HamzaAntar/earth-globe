@@ -222,7 +222,8 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
       .append("svg")
       .attr("role", "img")
       .attr("aria-label", "Interactive spinning globe with world countries")
-      .attr("class", "w-full h-auto select-none");
+      .attr("class", "w-full h-auto select-none")
+      .style("touch-action", "none");
 
     // Capture SVG element
     svgRef.current = svg.node() as SVGSVGElement;
