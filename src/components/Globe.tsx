@@ -469,18 +469,22 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
       }
     })();
 
-    // Zoom behavior - allow wheel zoom without Ctrl key
+    // Zoom behavior - allow wheel zoom and pinch-to-zoom on touch
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 3])
       .filter((event) => {
-        // Allow wheel events for zoom, but prevent drag events from being handled by zoom
-        return event.type === 'wheel' || (event.type === 'mousedown' && event.ctrlKey);
+        // Allow wheel, ctrl+mousedown, and multi-touch pinch
+        if (event.type === 'wheel') return true;
+        if (event.type === 'mousedown' && event.ctrlKey) return true;
+        if (event.type === 'touchstart' && event.touches && event.touches.length >= 2) return true;
+        return false;
       })
       .on("start", () => {
         speedRef.current = 0; // Stop auto-rotation
       })
       .on("zoom", (event) => {
-        if (event.sourceEvent && event.sourceEvent.type === 'wheel') {
+        const srcType = event.sourceEvent?.type;
+        if (srcType === 'wheel' || (srcType && srcType.startsWith('touch'))) {
           // Update the scale for the projection
           currentZoomRef.current = event.transform.k;
           
@@ -496,9 +500,16 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
         }
       });
 
-    // Drag behavior for rotation
+    // Drag behavior for rotation (supports mouse and single-finger touch via pointer events)
     const drag = d3.drag<SVGSVGElement, unknown>()
-      .filter((event) => !event.ctrlKey && event.button === 0) // Only left mouse drag without Ctrl
+      .filter((event) => {
+        if (event.ctrlKey) return false;
+        // Allow single-touch pointer drag; block multi-touch (handled by zoom)
+        if (event.pointerType === 'touch') {
+          return !event.touches || event.touches.length < 2;
+        }
+        return event.button === 0;
+      })
       .on("start", () => {
         speedRef.current = 0; // Stop auto-rotation
         svg.style("cursor", "grabbing");
