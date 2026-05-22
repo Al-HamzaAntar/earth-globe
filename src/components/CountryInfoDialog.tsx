@@ -104,9 +104,16 @@ const CountryInfoDialog: React.FC<CountryInfoDialogProps> = ({
           <DialogTitle className="flex items-center gap-3">
             {countryData?.flags?.png && (
               <img 
-                src={countryData.flags.png} 
+                src={countryData.flags.svg || countryData.flags.png} 
                 alt={countryData.flags.alt || `${displayName} flag`}
-                className="w-8 h-6 object-contain rounded border bg-muted shrink-0"
+                loading="lazy"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  if (countryData.flags?.png && img.src !== countryData.flags.png) {
+                    img.src = countryData.flags.png;
+                  }
+                }}
+                className="w-12 h-8 object-contain rounded border bg-muted shrink-0"
               />
             )}
             <span>{displayName || t('countryInfo.loading')}</span>
