@@ -504,11 +504,16 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
     const drag = d3.drag<SVGSVGElement, unknown>()
       .filter((event) => {
         if (event.ctrlKey) return false;
-        // Allow single-touch pointer drag; block multi-touch (handled by zoom)
-        if (event.pointerType === 'touch') {
-          return !event.touches || event.touches.length < 2;
+        // Touch events: allow single-finger drag, block multi-touch (handled by zoom)
+        if (event.type === 'touchstart' || event.type === 'touchmove') {
+          return event.touches && event.touches.length < 2;
         }
-        return event.button === 0;
+        // Pointer events with touch type
+        if (event.pointerType === 'touch') {
+          return true;
+        }
+        // Mouse: left button only
+        return !event.button;
       })
       .on("start", () => {
         speedRef.current = 0; // Stop auto-rotation
