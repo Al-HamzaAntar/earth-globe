@@ -702,12 +702,7 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
         const countryName = clicked.properties.name;
         
         // Check if it's an excluded country
-        const isExcluded = countryName === "Somaliland" ||
-                          countryName === "N. Cyprus" ||
-                          countryName === "Kosovo" ||
-                          countryName.toLowerCase().includes("somaliland") ||
-                          countryName.toLowerCase().includes("cyprus") ||
-                          countryName.toLowerCase().includes("kosovo");
+        const isExcluded = countryName === "N. Cyprus";
         
         if (!isExcluded) {
           setDialogOpen(true);
