@@ -227,6 +227,57 @@ const CountryInfoDialog: React.FC<CountryInfoDialogProps> = ({
                 </div>
               </>
             )}
+
+            <Separator />
+
+            {/* Administrative divisions */}
+            <div>
+              <Button
+                variant="outline"
+                className="w-full justify-between"
+                onClick={() => setShowDivisions((v) => !v)}
+              >
+                <span>
+                  {showDivisions
+                    ? t('countryInfo.hideDivisions')
+                    : t('countryInfo.showDivisions')}
+                </span>
+                {showDivisions ? (
+                  <ChevronUp className="h-4 w-4 shrink-0" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 shrink-0" />
+                )}
+              </Button>
+
+              {showDivisions && (
+                <div className="mt-3">
+                  {divisions.length > 0 ? (
+                    <>
+                      <div className="text-sm font-medium text-muted-foreground mb-2">
+                        {t('countryInfo.adminDivisions')} ({formatNumber(divisions.length)})
+                      </div>
+                      <ul className="max-h-56 overflow-y-auto space-y-1 pe-1">
+                        {divisions.map((d) => (
+                          <li
+                            key={d.code}
+                            className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1 text-sm"
+                          >
+                            <span dir="auto">{d.name}</span>
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              {d.type}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">
+                      {t('countryInfo.noDivisions')}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         ) : null}
       </DialogContent>
