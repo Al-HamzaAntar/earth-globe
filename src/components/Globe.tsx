@@ -326,9 +326,11 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
       try {
         const [world, restCountries] = await Promise.all([
           d3.json(WORLD_TOPO_URL) as Promise<any>,
-          fetch("https://restcountries.com/v3.1/all?fields=name,capital")
+          fetch(
+            "https://restcountries.com/v3.1/all?fields=name,capital,population,area,languages,currencies,flags,region,subregion,cca2,cca3,ccn3,altSpellings,translations"
+          )
             .then((r) => r.json())
-            .catch(() => []) as Promise<Array<{ name: { common: string }; capital?: string[] }>>
+            .catch(() => []) as Promise<any[]>
         ]);
 
         const countries = topojsonFeature(world, world.objects.countries)
