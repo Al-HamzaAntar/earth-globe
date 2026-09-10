@@ -711,7 +711,8 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
         
         if (!isExcluded) {
           setDialogOpen(true);
-          const countryData = await fetchCountryData(countryName);
+          setSelectedCountryData(null);
+          const countryData = await fetchCountryData(countryName, clicked.id ?? null);
           setSelectedCountryData(countryData);
         }
       }
