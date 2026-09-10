@@ -47,6 +47,22 @@ const CountryInfoDialog: React.FC<CountryInfoDialogProps> = ({
   loading = false,
 }) => {
   const { t, i18n } = useTranslation();
+  const [showDivisions, setShowDivisions] = React.useState(false);
+
+  React.useEffect(() => {
+    setShowDivisions(false);
+  }, [countryData?.name]);
+
+  const divisions = React.useMemo(() => {
+    if (!countryData) return [];
+    const entry =
+      (countryData.cca2 ? iso3166.country(countryData.cca2) : null) ||
+      iso3166.country(countryData.name);
+    if (!entry?.sub) return [];
+    return Object.entries(entry.sub)
+      .map(([code, sub]) => ({ code, name: sub.name, type: sub.type }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [countryData]);
 
   if (!countryData && !loading) return null;
 
