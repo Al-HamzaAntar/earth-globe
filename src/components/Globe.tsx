@@ -65,6 +65,7 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
       const subregionArabic = country.subregion ? t(`subregions.${country.subregion}`, { defaultValue: '' }) : undefined;
       
       return {
+        cca2: country.cca2,
         name: country.name?.common || countryName,
         nameArabic: nameArabic || undefined,
         capital: country.capital?.[0],
