@@ -47,45 +47,90 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
     null
   );
   const hoveredIdRef = useRef<string | number | null>(null);
+  const allCountriesRef = useRef<Map<string, any>>(new Map());
 
-  // Function to fetch detailed country data
-  const fetchCountryData = async (countryName: string): Promise<CountryData | null> => {
+  // Normalise a name for lookups ("Dem. Rep. Congo" -> "dem rep congo")
+  const normalizeName = (name: string) =>
+    name
+      .toLowerCase()
+      .replace(/[.'’`]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  // Build the dialog payload from a REST Countries record
+  const buildCountryData = (country: any, fallbackName: string): CountryData => {
+    const englishName = country?.name?.common || fallbackName;
+    // Palestine keeps Jerusalem as its capital
+    const isPalestine =
+      country?.cca2 === "PS" || /palestine/i.test(englishName);
+    const capital = isPalestine
+      ? "Jerusalem"
+      : country?.capital?.[0] ||
+        countryInfoRef.current.get(fallbackName)?.capital ||
+        countryInfoRef.current.get(fallbackName.toLowerCase())?.capital;
+
+    const name = isPalestine ? "Palestine" : englishName;
+    const nameArabic =
+      t(`countries.${fallbackName}`, { defaultValue: "" }) ||
+      t(`countries.${name}`, { defaultValue: "" }) ||
+      country?.translations?.ara?.common ||
+      undefined;
+    const capitalArabic = capital
+      ? t(`capitals.${capital}`, { defaultValue: "" }) || undefined
+      : undefined;
+    const regionArabic = country?.region
+      ? t(`regions.${country.region}`, { defaultValue: "" }) || undefined
+      : undefined;
+    const subregionArabic = country?.subregion
+      ? t(`subregions.${country.subregion}`, { defaultValue: "" }) || undefined
+      : undefined;
+
+    return {
+      cca2: country?.cca2,
+      name,
+      nameArabic,
+      capital,
+      capitalArabic,
+      population: country?.population,
+      area: country?.area,
+      currencies: country?.currencies,
+      languages: country?.languages,
+      flags: country?.flags,
+      region: country?.region,
+      regionArabic,
+      subregion: country?.subregion,
+      subregionArabic,
+    };
+  };
+
+  // Function to resolve detailed country data (cached dataset first, network as backup)
+  const fetchCountryData = async (
+    countryName: string,
+    featureId?: string | number | null
+  ): Promise<CountryData | null> => {
     try {
       setCountryDataLoading(true);
-      const response = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fullText=true`);
-      if (!response.ok) throw new Error('Country not found');
-      
-      const data = await response.json();
-      const country = data[0];
-      
-      // Get Arabic translations
-      const nameArabic = country.translations?.ara?.common;
-      const capitalArabic = country.capital?.[0] ? t(`capitals.${country.capital[0]}`, { defaultValue: '' }) : undefined;
-      const regionArabic = country.region ? t(`regions.${country.region}`, { defaultValue: '' }) : undefined;
-      const subregionArabic = country.subregion ? t(`subregions.${country.subregion}`, { defaultValue: '' }) : undefined;
-      
-      return {
-        cca2: country.cca2,
-        name: country.name?.common || countryName,
-        nameArabic: nameArabic || undefined,
-        capital: country.capital?.[0],
-        capitalArabic: capitalArabic || undefined,
-        population: country.population,
-        area: country.area,
-        currencies: country.currencies,
-        languages: country.languages,
-        flags: country.flags,
-        region: country.region,
-        regionArabic: regionArabic || undefined,
-        subregion: country.subregion,
-        subregionArabic: subregionArabic || undefined,
-      };
+
+      const numeric =
+        featureId != null ? String(featureId).padStart(3, "0") : null;
+      let record =
+        (numeric ? allCountriesRef.current.get(`ccn3:${numeric}`) : undefined) ||
+        allCountriesRef.current.get(`name:${normalizeName(countryName)}`);
+
+      if (!record) {
+        const response = await fetch(
+          `https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fields=name,capital,population,area,languages,currencies,flags,region,subregion,cca2,ccn3,translations`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          record = Array.isArray(data) ? data[0] : data;
+        }
+      }
+
+      return buildCountryData(record, countryName);
     } catch (error) {
-      console.error('Failed to fetch country data:', error);
-      return {
-        name: countryName,
-        capital: countryInfoRef.current.get(countryName)?.capital,
-      };
+      console.error("Failed to fetch country data:", error);
+      return buildCountryData(null, countryName);
     } finally {
       setCountryDataLoading(false);
     }
