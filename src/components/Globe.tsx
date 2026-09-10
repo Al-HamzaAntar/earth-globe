@@ -480,24 +480,62 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
           "Madagascar": "Antananarivo"
         };
         
-        // First add REST Countries data
+        // Index the full REST Countries dataset for detail lookups
+        const lookup = new Map<string, any>();
         restCountries.forEach((country) => {
-          const name = country.name?.common;
+          const name = country?.name?.common;
+          if (!name) return;
+          if (country.ccn3) lookup.set(`ccn3:${String(country.ccn3).padStart(3, "0")}`, country);
+          const aliases = [
+            name,
+            country?.name?.official,
+            country?.cca2,
+            country?.cca3,
+            ...(country?.altSpellings ?? []),
+            ...Object.values(country?.name?.nativeName ?? {}).map(
+              (n: any) => n?.common
+            ),
+          ].filter(Boolean) as string[];
+          aliases.forEach((alias) => {
+            const key = `name:${normalizeName(alias)}`;
+            if (!lookup.has(key)) lookup.set(key, country);
+          });
+
           const capital = country.capital?.[0];
-          if (name) {
-            countryInfoMap.set(name, { name, capital });
-            countryInfoMap.set(name.toLowerCase(), { name, capital });
+          countryInfoMap.set(name, { name, capital });
+          countryInfoMap.set(name.toLowerCase(), { name, capital });
+        });
+        allCountriesRef.current = lookup;
+
+        // Match every map shape to the dataset by ISO numeric code so tooltips
+        // have a capital even when the map spells the name differently
+        modifiedCountries.forEach((f) => {
+          const mapName = f.properties?.name;
+          if (!mapName) return;
+          const numeric = f.id != null ? String(f.id).padStart(3, "0") : null;
+          const record =
+            (numeric ? lookup.get(`ccn3:${numeric}`) : undefined) ||
+            lookup.get(`name:${normalizeName(mapName)}`);
+          if (record) {
+            lookup.set(`name:${normalizeName(mapName)}`, record);
+            const capital = /palestine/i.test(mapName)
+              ? "Jerusalem"
+              : record.capital?.[0];
+            if (capital) {
+              countryInfoMap.set(mapName, { name: mapName, capital });
+              countryInfoMap.set(mapName.toLowerCase(), { name: mapName, capital });
+            }
           }
         });
-        
-        // Then add fallback capitals
+
+        // Then add fallback capitals for anything still missing
         Object.entries(fallbackCapitals).forEach(([name, capital]) => {
-          if (!countryInfoMap.has(name)) {
+          if (!countryInfoMap.get(name)?.capital) {
             countryInfoMap.set(name, { name, capital });
             countryInfoMap.set(name.toLowerCase(), { name, capital });
           }
         });
-        
+
         countryInfoRef.current = countryInfoMap;
 
         // Find and highlight Yemen by default
