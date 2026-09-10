@@ -47,45 +47,90 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
     null
   );
   const hoveredIdRef = useRef<string | number | null>(null);
+  const allCountriesRef = useRef<Map<string, any>>(new Map());
 
-  // Function to fetch detailed country data
-  const fetchCountryData = async (countryName: string): Promise<CountryData | null> => {
+  // Normalise a name for lookups ("Dem. Rep. Congo" -> "dem rep congo")
+  const normalizeName = (name: string) =>
+    name
+      .toLowerCase()
+      .replace(/[.'’`]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  // Build the dialog payload from a REST Countries record
+  const buildCountryData = (country: any, fallbackName: string): CountryData => {
+    const englishName = country?.name?.common || fallbackName;
+    // Palestine keeps Jerusalem as its capital
+    const isPalestine =
+      country?.cca2 === "PS" || /palestine/i.test(englishName);
+    const capital = isPalestine
+      ? "Jerusalem"
+      : country?.capital?.[0] ||
+        countryInfoRef.current.get(fallbackName)?.capital ||
+        countryInfoRef.current.get(fallbackName.toLowerCase())?.capital;
+
+    const name = isPalestine ? "Palestine" : englishName;
+    const nameArabic =
+      t(`countries.${fallbackName}`, { defaultValue: "" }) ||
+      t(`countries.${name}`, { defaultValue: "" }) ||
+      country?.translations?.ara?.common ||
+      undefined;
+    const capitalArabic = capital
+      ? t(`capitals.${capital}`, { defaultValue: "" }) || undefined
+      : undefined;
+    const regionArabic = country?.region
+      ? t(`regions.${country.region}`, { defaultValue: "" }) || undefined
+      : undefined;
+    const subregionArabic = country?.subregion
+      ? t(`subregions.${country.subregion}`, { defaultValue: "" }) || undefined
+      : undefined;
+
+    return {
+      cca2: country?.cca2,
+      name,
+      nameArabic,
+      capital,
+      capitalArabic,
+      population: country?.population,
+      area: country?.area,
+      currencies: country?.currencies,
+      languages: country?.languages,
+      flags: country?.flags,
+      region: country?.region,
+      regionArabic,
+      subregion: country?.subregion,
+      subregionArabic,
+    };
+  };
+
+  // Function to resolve detailed country data (cached dataset first, network as backup)
+  const fetchCountryData = async (
+    countryName: string,
+    featureId?: string | number | null
+  ): Promise<CountryData | null> => {
     try {
       setCountryDataLoading(true);
-      const response = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fullText=true`);
-      if (!response.ok) throw new Error('Country not found');
-      
-      const data = await response.json();
-      const country = data[0];
-      
-      // Get Arabic translations
-      const nameArabic = country.translations?.ara?.common;
-      const capitalArabic = country.capital?.[0] ? t(`capitals.${country.capital[0]}`, { defaultValue: '' }) : undefined;
-      const regionArabic = country.region ? t(`regions.${country.region}`, { defaultValue: '' }) : undefined;
-      const subregionArabic = country.subregion ? t(`subregions.${country.subregion}`, { defaultValue: '' }) : undefined;
-      
-      return {
-        cca2: country.cca2,
-        name: country.name?.common || countryName,
-        nameArabic: nameArabic || undefined,
-        capital: country.capital?.[0],
-        capitalArabic: capitalArabic || undefined,
-        population: country.population,
-        area: country.area,
-        currencies: country.currencies,
-        languages: country.languages,
-        flags: country.flags,
-        region: country.region,
-        regionArabic: regionArabic || undefined,
-        subregion: country.subregion,
-        subregionArabic: subregionArabic || undefined,
-      };
+
+      const numeric =
+        featureId != null ? String(featureId).padStart(3, "0") : null;
+      let record =
+        (numeric ? allCountriesRef.current.get(`ccn3:${numeric}`) : undefined) ||
+        allCountriesRef.current.get(`name:${normalizeName(countryName)}`);
+
+      if (!record) {
+        const response = await fetch(
+          `https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fields=name,capital,population,area,languages,currencies,flags,region,subregion,cca2,ccn3,translations`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          record = Array.isArray(data) ? data[0] : data;
+        }
+      }
+
+      return buildCountryData(record, countryName);
     } catch (error) {
-      console.error('Failed to fetch country data:', error);
-      return {
-        name: countryName,
-        capital: countryInfoRef.current.get(countryName)?.capital,
-      };
+      console.error("Failed to fetch country data:", error);
+      return buildCountryData(null, countryName);
     } finally {
       setCountryDataLoading(false);
     }
@@ -281,9 +326,11 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
       try {
         const [world, restCountries] = await Promise.all([
           d3.json(WORLD_TOPO_URL) as Promise<any>,
-          fetch("https://restcountries.com/v3.1/all?fields=name,capital")
+          fetch(
+            "https://restcountries.com/v3.1/all?fields=name,capital,population,area,languages,currencies,flags,region,subregion,cca2,cca3,ccn3,altSpellings,translations"
+          )
             .then((r) => r.json())
-            .catch(() => []) as Promise<Array<{ name: { common: string }; capital?: string[] }>>
+            .catch(() => []) as Promise<any[]>
         ]);
 
         const countries = topojsonFeature(world, world.objects.countries)
@@ -433,24 +480,62 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
           "Madagascar": "Antananarivo"
         };
         
-        // First add REST Countries data
+        // Index the full REST Countries dataset for detail lookups
+        const lookup = new Map<string, any>();
         restCountries.forEach((country) => {
-          const name = country.name?.common;
+          const name = country?.name?.common;
+          if (!name) return;
+          if (country.ccn3) lookup.set(`ccn3:${String(country.ccn3).padStart(3, "0")}`, country);
+          const aliases = [
+            name,
+            country?.name?.official,
+            country?.cca2,
+            country?.cca3,
+            ...(country?.altSpellings ?? []),
+            ...Object.values(country?.name?.nativeName ?? {}).map(
+              (n: any) => n?.common
+            ),
+          ].filter(Boolean) as string[];
+          aliases.forEach((alias) => {
+            const key = `name:${normalizeName(alias)}`;
+            if (!lookup.has(key)) lookup.set(key, country);
+          });
+
           const capital = country.capital?.[0];
-          if (name) {
-            countryInfoMap.set(name, { name, capital });
-            countryInfoMap.set(name.toLowerCase(), { name, capital });
+          countryInfoMap.set(name, { name, capital });
+          countryInfoMap.set(name.toLowerCase(), { name, capital });
+        });
+        allCountriesRef.current = lookup;
+
+        // Match every map shape to the dataset by ISO numeric code so tooltips
+        // have a capital even when the map spells the name differently
+        modifiedCountries.forEach((f) => {
+          const mapName = f.properties?.name;
+          if (!mapName) return;
+          const numeric = f.id != null ? String(f.id).padStart(3, "0") : null;
+          const record =
+            (numeric ? lookup.get(`ccn3:${numeric}`) : undefined) ||
+            lookup.get(`name:${normalizeName(mapName)}`);
+          if (record) {
+            lookup.set(`name:${normalizeName(mapName)}`, record);
+            const capital = /palestine/i.test(mapName)
+              ? "Jerusalem"
+              : record.capital?.[0];
+            if (capital) {
+              countryInfoMap.set(mapName, { name: mapName, capital });
+              countryInfoMap.set(mapName.toLowerCase(), { name: mapName, capital });
+            }
           }
         });
-        
-        // Then add fallback capitals
+
+        // Then add fallback capitals for anything still missing
         Object.entries(fallbackCapitals).forEach(([name, capital]) => {
-          if (!countryInfoMap.has(name)) {
+          if (!countryInfoMap.get(name)?.capital) {
             countryInfoMap.set(name, { name, capital });
             countryInfoMap.set(name.toLowerCase(), { name, capital });
           }
         });
-        
+
         countryInfoRef.current = countryInfoMap;
 
         // Find and highlight Yemen by default
@@ -617,16 +702,12 @@ const Globe: React.FC<GlobeProps> = ({ searchCountry, onCountryFound }) => {
         const countryName = clicked.properties.name;
         
         // Check if it's an excluded country
-        const isExcluded = countryName === "Somaliland" ||
-                          countryName === "N. Cyprus" ||
-                          countryName === "Kosovo" ||
-                          countryName.toLowerCase().includes("somaliland") ||
-                          countryName.toLowerCase().includes("cyprus") ||
-                          countryName.toLowerCase().includes("kosovo");
+        const isExcluded = countryName === "N. Cyprus";
         
         if (!isExcluded) {
           setDialogOpen(true);
-          const countryData = await fetchCountryData(countryName);
+          setSelectedCountryData(null);
+          const countryData = await fetchCountryData(countryName, clicked.id ?? null);
           setSelectedCountryData(countryData);
         }
       }
